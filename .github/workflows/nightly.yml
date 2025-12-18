@@ -1,8 +1,8 @@
 name: Nightly Full Test Suite
 on:
   schedule:
-    # Runs at 1 PM Eastern Time (6 PM UTC) every day
-    - cron: '0 18 * * *'
+    # TESTING: Runs every 5 minutes (change back to '0 18 * * *' for daily at 1PM ET)
+    - cron: '*/5 * * * *'
   workflow_dispatch:  # Allows manual trigger from GitHub UI
 
 jobs:
