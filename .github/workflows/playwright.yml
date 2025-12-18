@@ -4,6 +4,16 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+  workflow_dispatch:
+    inputs:
+      test_suite:
+        description: 'Test suite to run'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - smoke
+          - all
 jobs:
   test:
     timeout-minutes: 60
@@ -23,7 +33,14 @@ jobs:
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps
     - name: Run Playwright tests
-      run: npx playwright test --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
+      run: |
+        if [ "${{ github.event_name }}" == "push" ]; then
+          npx playwright test --grep-tag @smoke --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
+        elif [ "${{ github.event.inputs.test_suite }}" == "smoke" ]; then
+          npx playwright test --grep-tag @smoke --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
+        else
+          npx playwright test --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
+        fi
     - name: Upload blob report to GitHub Actions Artifacts
       if: ${{ !cancelled() }}
       uses: actions/upload-artifact@v4
