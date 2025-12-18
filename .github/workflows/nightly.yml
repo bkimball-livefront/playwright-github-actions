@@ -3,6 +3,8 @@ on:
   schedule:
     # Runs at 1:07 PM Eastern Time (6:07 PM UTC) every day
     - cron: '7 18 * * *'
+    # Runs at 1 AM Eastern Time (6 AM UTC) every day
+    - cron: '7 6 * * *'
   workflow_dispatch:  # Allows manual trigger from GitHub UI
 
 jobs:
