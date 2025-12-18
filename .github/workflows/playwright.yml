@@ -35,9 +35,9 @@ jobs:
     - name: Run Playwright tests
       run: |
         if [ "${{ github.event_name }}" == "push" ]; then
-          npx playwright test --grep-tag @smoke --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
+          npx playwright test --grep @smoke --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
         elif [ "${{ github.event.inputs.test_suite }}" == "smoke" ]; then
-          npx playwright test --grep-tag @smoke --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
+          npx playwright test --grep @smoke --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
         else
           npx playwright test --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
         fi

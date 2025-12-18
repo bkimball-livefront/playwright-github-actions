@@ -6,7 +6,7 @@ test.describe("Wikipedia Tests", () => {
         await wikipediaHomePage.open();
     });
 
-    test("should load Wikipedia homepage", { tag: '@smoke' }, async ({ page, wikipediaHomePage }) => {
+    test("should load Wikipedia homepage", { tag: ['@smoke', '@sanity'] }, async ({ page, wikipediaHomePage }) => {
         await expect(page).toHaveTitle(/Wikipedia/);
         expect(await wikipediaHomePage.isSearchVisible()).toBeTruthy();
     });
