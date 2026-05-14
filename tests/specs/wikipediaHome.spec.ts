@@ -32,4 +32,8 @@ test.describe("Wikipedia Tests", () => {
     test("should land on wikipedia.org URL", { tag: '@smoke' }, async ({ page }) => {
         expect(page.url()).toContain("wikipedia.org");
     });
+
+    test("should have search input enabled", { tag: '@smoke' }, async ({ wikipediaHomePage }) => {
+        await expect(wikipediaHomePage.searchInput).toBeEnabled();
+    });
 });
