@@ -4,6 +4,11 @@ on:
   pull_request:
     types: [labeled]
   workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to review'
+        required: true
+        type: string
 
 jobs:
   qa-review:
@@ -24,19 +29,21 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          use_sticky_comment: true
+          show_full_output: true
           prompt: |
-            Run the qa-agent skill in CI mode (--ci) against this PR:
-            ${{ github.event.pull_request.html_url }}
+            You are a QA engineer performing a code review on this pull request:
+            ${{ github.event_name == 'workflow_dispatch' && format('https://github.com/{0}/pull/{1}', github.repository, inputs.pr_number) || github.event.pull_request.html_url }}
 
-            You are in CI mode. Follow the qa-agent CI workflow:
-            1. Discover the stack via detect_stack.sh
-            2. Analyze the PR diff and build the traceability matrix
-            3. Propose unit, E2E, edge case, and manual scenarios
-            4. Post the full matrix as a PR comment (markdown table + collapsed details per file)
-            5. Report the verdict
+            Your task:
+            1. Use `gh pr diff` and `gh pr view` to understand what changed in this PR
+            2. Analyze the changes and identify what tests exist vs what is missing
+            3. Build a traceability matrix covering: unit tests, E2E tests, edge cases, and manual scenarios
+            4. Post the matrix as a PR comment using `gh pr comment` with a markdown table
+            5. End with a verdict: READY / NEEDS TESTS / NEEDS MANUAL VERIFICATION
 
             Do NOT wait for user input. Do NOT write tests. Do NOT create branches.
-            Output the matrix and verdict, then stop.
+            Post the comment and stop.
 
       - name: Remove qa-review label
         if: always() && github.event_name == 'pull_request'
