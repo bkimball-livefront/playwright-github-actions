@@ -106,7 +106,7 @@ export class WikipediaHomePage extends BasePage {
      * Type in search and wait for suggestions to appear
      */
     async typeSearchAndWaitForSuggestions(searchTerm: string) {
-        await this.searchInput.fill(searchTerm);
+        await this.searchInput.pressSequentially(searchTerm, { delay: 50 });
         await this.suggestionLinks.first().waitFor({ state: 'visible' });
     }
     /**
