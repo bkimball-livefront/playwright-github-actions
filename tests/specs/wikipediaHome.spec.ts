@@ -28,4 +28,8 @@ test.describe("Wikipedia Tests", () => {
         const logo = wikipediaHomePage.getWikipediaLogo();
         await expect(logo).toBeVisible();
     });
+
+    test("should land on wikipedia.org URL", { tag: '@smoke' }, async ({ page }) => {
+        expect(page.url()).toContain("wikipedia.org");
+    });
 });
