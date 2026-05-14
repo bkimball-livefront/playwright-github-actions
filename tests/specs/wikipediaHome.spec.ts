@@ -36,4 +36,8 @@ test.describe("Wikipedia Tests", () => {
     test("should have search input enabled", { tag: '@smoke' }, async ({ wikipediaHomePage }) => {
         await expect(wikipediaHomePage.searchInput).toBeEnabled();
     });
+
+    test("should have empty search input on load", { tag: '@smoke' }, async ({ wikipediaHomePage }) => {
+        await expect(wikipediaHomePage.searchInput).toHaveValue('');
+    });
 });
