@@ -2,95 +2,54 @@ name: QA Review
 
 on:
   pull_request:
-    branches: [main, master]
+    types: [labeled]
   workflow_dispatch:
 
 jobs:
   qa-review:
     name: Claude QA Review
+    if: github.event_name == 'workflow_dispatch' || github.event.label.name == 'qa-review'
     runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: write
+      id-token: write
 
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: lts/*
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Install Claude Code
-        run: npm install -g @anthropic-ai/claude-code
-
       - name: Run QA Review
-        id: qa_review
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: |
-          claude --print "/qa-review" > qa-review-output.txt 2>&1
-          echo "exit_code=$?" >> $GITHUB_OUTPUT
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Run the qa-agent skill in CI mode (--ci) against this PR:
+            ${{ github.event.pull_request.html_url }}
 
-      - name: Read QA Review output
-        if: github.event_name == 'pull_request'
-        id: read_output
-        run: |
-          {
-            echo 'qa_output<<QA_EOF'
-            cat qa-review-output.txt
-            echo 'QA_EOF'
-          } >> $GITHUB_OUTPUT
+            You are in CI mode. Follow the qa-agent CI workflow:
+            1. Discover the stack via detect_stack.sh
+            2. Analyze the PR diff and build the traceability matrix
+            3. Propose unit, E2E, edge case, and manual scenarios
+            4. Post the full matrix as a PR comment (markdown table + collapsed details per file)
+            5. Report the verdict
 
-      - name: Post QA Review comment
-        if: github.event_name == 'pull_request'
+            Do NOT wait for user input. Do NOT write tests. Do NOT create branches.
+            Output the matrix and verdict, then stop.
+
+      - name: Remove qa-review label
+        if: always() && github.event_name == 'pull_request'
         uses: actions/github-script@v7
-        env:
-          QA_OUTPUT: ${{ steps.read_output.outputs.qa_output }}
         with:
           script: |
-            const output = process.env.QA_OUTPUT;
-
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
-
-            const botComment = comments.find(c =>
-              c.user.type === 'Bot' && c.body.includes('<!-- qa-review -->')
-            );
-
-            const body = `<!-- qa-review -->
-## QA Review
-
-${output}
-`;
-
-            if (botComment) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: botComment.id,
-                body,
-              });
-            } else {
-              await github.rest.issues.createComment({
+            try {
+              await github.rest.issues.removeLabel({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.issue.number,
-                body,
+                name: 'qa-review'
               });
+            } catch (e) {
+              // Label may already be removed
             }
-
-      - name: Upload QA Review artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: qa-review-report
-          path: qa-review-output.txt
-          retention-days: 30
